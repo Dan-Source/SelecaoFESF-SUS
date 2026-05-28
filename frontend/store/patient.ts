@@ -1,14 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-
-type Appointment = {
-  id: number;
-  slot_id: number;
-  patient_id: number;
-  dentist_id: number;
-  created_at: string;
-};
+import { Appointment } from "@/types/models";
 
 type PatientState = {
   appointments: Appointment[];

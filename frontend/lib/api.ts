@@ -1,6 +1,6 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+import { Appointment, Dentist, Role, Slot } from "@/types/models";
 
-export type Role = "patient" | "dentist";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 async function request<T>(
   path: string,
@@ -65,21 +65,15 @@ export async function login(email: string, password: string): Promise<{ access_t
 }
 
 export function listDentists(token: string) {
-  return request<Array<{ id: number; name: string; email: string; role: Role }>>(
-    "/patients/dentists",
-    { method: "GET" },
-    token
-  );
+  return request<Dentist[]>("/patients/dentists", { method: "GET" }, token);
 }
 
 export function listDentistFreeSlots(dentistId: number, token: string) {
-  return request<
-    Array<{ id: number; dentist_id: number; start_time: string; end_time: string; available: boolean }>
-  >(`/patients/dentists/${dentistId}/slots`, { method: "GET" }, token);
+  return request<Slot[]>(`/patients/dentists/${dentistId}/slots`, { method: "GET" }, token);
 }
 
 export function createAppointment(slotId: number, token: string) {
-  return request<{ id: number; slot_id: number; patient_id: number; dentist_id: number; created_at: string }>(
+  return request<Appointment>(
     "/patients/me/appointments",
     { method: "POST", body: JSON.stringify({ slot_id: slotId }) },
     token
@@ -87,7 +81,7 @@ export function createAppointment(slotId: number, token: string) {
 }
 
 export function listMyAppointments(token: string) {
-  return request<Array<{ id: number; slot_id: number; patient_id: number; dentist_id: number; created_at: string }>>(
+  return request<Appointment[]>(
     "/patients/me/appointments",
     { method: "GET" },
     token
@@ -99,7 +93,7 @@ export function cancelAppointment(appointmentId: number, token: string) {
 }
 
 export function createSlot(startTime: string, endTime: string, token: string) {
-  return request<{ id: number; dentist_id: number; start_time: string; end_time: string; available: boolean }>(
+  return request<Slot>(
     "/dentists/me/slots",
     { method: "POST", body: JSON.stringify({ start_time: startTime, end_time: endTime }) },
     token
@@ -107,7 +101,7 @@ export function createSlot(startTime: string, endTime: string, token: string) {
 }
 
 export function listMySlots(token: string) {
-  return request<Array<{ id: number; dentist_id: number; start_time: string; end_time: string; available: boolean }>>(
+  return request<Slot[]>(
     "/dentists/me/slots",
     { method: "GET" },
     token
@@ -119,7 +113,7 @@ export function deleteSlot(slotId: number, token: string) {
 }
 
 export function listDentistAppointments(token: string) {
-  return request<Array<{ id: number; slot_id: number; patient_id: number; dentist_id: number; created_at: string }>>(
+  return request<Appointment[]>(
     "/dentists/me/appointments",
     { method: "GET" },
     token

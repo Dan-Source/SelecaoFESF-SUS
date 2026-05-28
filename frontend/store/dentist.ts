@@ -1,14 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-
-type Slot = {
-  id: number;
-  dentist_id: number;
-  start_time: string;
-  end_time: string;
-  available: boolean;
-};
+import { Slot } from "@/types/models";
 
 type DentistState = {
   slots: Slot[];

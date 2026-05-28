@@ -3,9 +3,18 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { registerUser } from "@/lib/api";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
+import { useToast } from "@/hooks/useToast";
+import { Role } from "@/types/models";
 
 export default function RegisterPage() {
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -13,36 +22,49 @@ export default function RegisterPage() {
     const formData = new FormData(form);
 
     try {
+      setLoading(true);
+      setMessage("");
       await registerUser({
         name: String(formData.get("name")),
         email: String(formData.get("email")),
         password: String(formData.get("password")),
-        role: String(formData.get("role")) as "patient" | "dentist",
+        role: String(formData.get("role")) as Role,
       });
       setMessage("Cadastro realizado com sucesso. Faca login.");
+      toast.success("Cadastro realizado com sucesso.");
       form.reset();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro ao cadastrar");
+      const nextMessage = error instanceof Error ? error.message : "Erro ao cadastrar";
+      setMessage(nextMessage);
+      toast.error(nextMessage);
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <main>
+    <main className="page-wrap" style={{ maxWidth: 896 }}>
       <h1>Cadastro</h1>
-      <form onSubmit={onSubmit} className="card">
-        <div className="row">
-          <input name="name" placeholder="Nome" required />
-          <input name="email" type="email" placeholder="Email" required />
-          <input name="password" type="password" placeholder="Senha" required />
-          <select name="role" defaultValue="patient">
+      <Card>
+        <form onSubmit={onSubmit} className="form-grid">
+          <Input id="name" name="name" label="Nome completo" placeholder="Digite seu nome" required />
+          <Input id="email" name="email" type="email" label="Email" placeholder="seu@email.com" required />
+          <Input id="password" name="password" type="password" label="Senha" placeholder="Crie uma senha segura" required />
+          <Select id="role" name="role" label="Perfil" defaultValue="patient">
             <option value="patient">Paciente</option>
             <option value="dentist">Odontologo</option>
-          </select>
-          <button type="submit">Cadastrar</button>
-        </div>
-        <p>{message}</p>
-      </form>
-      <Link href="/login">Ir para login</Link>
+          </Select>
+          <Button type="submit" loading={loading}>
+            Cadastrar
+          </Button>
+          {message ? <Alert variant="success">{message}</Alert> : null}
+        </form>
+      </Card>
+
+      <div className="row">
+        <span className="muted">Ja possui conta?</span>
+        <Link href="/login">Ir para login</Link>
+      </div>
     </main>
   );
 }

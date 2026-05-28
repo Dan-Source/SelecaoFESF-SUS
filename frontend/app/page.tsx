@@ -1,16 +1,21 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/Card";
 
 export default function HomePage() {
   return (
-    <main>
-      <h1>Sistema de Agendamento Odontologico</h1>
-      <div className="card">
-        <p>Escolha uma acao:</p>
+    <main className="page-wrap">
+      <h1>DentalCare</h1>
+      <p className="muted">Agendamento odontologico profissional, acolhedor e simples.</p>
+      <Card title="Comece agora">
         <div className="row">
-          <Link href="/register">Cadastro</Link>
-          <Link href="/login">Login</Link>
+          <Link href="/register" className="btn-primary">
+            Criar conta
+          </Link>
+          <Link href="/login" className="btn-secondary">
+            Entrar
+          </Link>
         </div>
-      </div>
+      </Card>
     </main>
   );
 }

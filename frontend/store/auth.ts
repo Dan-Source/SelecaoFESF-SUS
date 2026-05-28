@@ -1,8 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-
-type Role = "patient" | "dentist";
+import { Role } from "@/types/models";
 
 type AuthState = {
   token: string | null;
