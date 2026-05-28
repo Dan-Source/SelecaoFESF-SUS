@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/.venv/
+backend/*.egg-info/
+backend/test.db
+backend/data/app.db
+frontend/.next/
+frontend/node_modules/
+.env

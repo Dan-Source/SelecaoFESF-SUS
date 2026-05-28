@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: odonto_backend
+    environment:
+      - DATABASE_URL=sqlite:///./data/app.db
+      - JWT_SECRET_KEY=super-secret-change-me
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: odonto_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
