@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/hooks/useToast";
 import { Role } from "@/types/models";
+import { submitLogin } from "./login-actions";
 
 export default function LoginPage() {
   const [message, setMessage] = useState("");
@@ -23,28 +24,23 @@ export default function LoginPage() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email"));
-    const password = String(formData.get("password"));
-    const role = String(formData.get("role")) as Role;
 
-    try {
-      setLoading(true);
-      setMessage("");
-      const response = await login(email, password);
-      setAuth(response.access_token, role);
-      toast.success("Login realizado com sucesso.");
-      if (role === "patient") {
-        router.push("/paciente");
-      } else {
-        router.push("/odontologo");
+    await submitLogin(
+      {
+        email: String(formData.get("email")),
+        password: String(formData.get("password")),
+        role: String(formData.get("role")) as Role,
+      },
+      {
+        loginUser: login,
+        setAuth,
+        navigate: (path) => router.push(path),
+        setMessage,
+        setLoading,
+        showSuccess: toast.success,
+        showError: toast.error,
       }
-    } catch (error) {
-      const nextMessage = error instanceof Error ? error.message : "Erro ao autenticar";
-      setMessage(nextMessage);
-      toast.error(nextMessage);
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
   return (

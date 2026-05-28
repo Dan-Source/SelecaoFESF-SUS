@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/hooks/useToast";
 import { Role } from "@/types/models";
+import { submitRegister } from "./register-actions";
 
 export default function RegisterPage() {
   const [message, setMessage] = useState("");
@@ -21,25 +22,22 @@ export default function RegisterPage() {
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    try {
-      setLoading(true);
-      setMessage("");
-      await registerUser({
+    await submitRegister(
+      {
         name: String(formData.get("name")),
         email: String(formData.get("email")),
         password: String(formData.get("password")),
         role: String(formData.get("role")) as Role,
-      });
-      setMessage("Cadastro realizado com sucesso. Faca login.");
-      toast.success("Cadastro realizado com sucesso.");
-      form.reset();
-    } catch (error) {
-      const nextMessage = error instanceof Error ? error.message : "Erro ao cadastrar";
-      setMessage(nextMessage);
-      toast.error(nextMessage);
-    } finally {
-      setLoading(false);
-    }
+      },
+      {
+        registerUser,
+        setMessage,
+        setLoading,
+        showSuccess: toast.success,
+        showError: toast.error,
+        resetForm: () => form.reset(),
+      }
+    );
   }
 
   return (
