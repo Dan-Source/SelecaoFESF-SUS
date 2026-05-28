@@ -21,12 +21,13 @@ export function AppHeader() {
         </Link>
 
         <nav className="top-nav" aria-label="Navegacao principal">
-          <Link href="/">Inicio</Link>
-          {!token && <Link href="/login">Login</Link>}
-          {!token && <Link href="/register">Cadastro</Link>}
-          {token && role === "patient" && <Link href="/paciente">Paciente</Link>}
-          {token && role === "dentist" && <Link href="/odontologo">Odontologo</Link>}
-          {pathname !== "/" && <span className="badge badge-info">{pathname.replace("/", "") || "inicio"}</span>}
+          {!token && <Link href="/login">Entrar</Link>}
+          {!token && <Link href="/register">Criar conta</Link>}
+          {token && role === "patient" && <Link href="/paciente">Área do paciente</Link>}
+          {token && role === "dentist" && <Link href="/odontologo">Área do odontólogo</Link>}
+          {token && pathname !== "/" && (
+            <span className="badge badge-info">{pathname.replace("/", "") || "inicio"}</span>
+          )}
         </nav>
 
         {token ? (
