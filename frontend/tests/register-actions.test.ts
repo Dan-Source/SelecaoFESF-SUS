@@ -1,8 +1,17 @@
+import { describe, expect, it, jest } from "@jest/globals";
 import { submitRegister } from "../app/register/register-actions";
+
+type RegisterUserFn = (payload: {
+  name: string;
+  email: string;
+  password: string;
+  role: "patient" | "dentist";
+}) => Promise<unknown>;
 
 describe("submitRegister", () => {
   it("registers a user and resets the form", async () => {
-    const registerUser = jest.fn().mockResolvedValue(undefined);
+    const registerUser = jest.fn() as jest.MockedFunction<RegisterUserFn>;
+    registerUser.mockResolvedValue(undefined);
     const setMessage = jest.fn();
     const setLoading = jest.fn();
     const showSuccess = jest.fn();
@@ -35,7 +44,8 @@ describe("submitRegister", () => {
   });
 
   it("surfaces register errors", async () => {
-    const registerUser = jest.fn().mockRejectedValue(new Error("Erro ao cadastrar"));
+    const registerUser = jest.fn() as jest.MockedFunction<RegisterUserFn>;
+    registerUser.mockRejectedValue(new Error("Erro ao cadastrar"));
     const setMessage = jest.fn();
     const setLoading = jest.fn();
     const showSuccess = jest.fn();

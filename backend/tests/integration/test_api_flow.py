@@ -8,13 +8,16 @@ def _register(client, name, email, password, role):
     )
 
 
-def _login(client, email, password):
+def _login(client, email, password, expected_role):
     response = client.post(
         "/api/v1/auth/login",
         data={"username": email, "password": password},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    token = response.json()["access_token"]
+    assert response.status_code == 200
+    body = response.json()
+    assert body["role"] == expected_role
+    token = body["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -25,8 +28,8 @@ def test_full_flow(client):
     assert dentist_reg.status_code == 201
     assert patient_reg.status_code == 201
 
-    dentist_headers = _login(client, "dent@x.com", "123456")
-    patient_headers = _login(client, "pat@x.com", "123456")
+    dentist_headers = _login(client, "dent@x.com", "123456", "dentist")
+    patient_headers = _login(client, "pat@x.com", "123456", "patient")
 
     now = datetime.now(timezone.utc)
     create_slot = client.post(

@@ -44,7 +44,7 @@ export async function registerUser(payload: {
   });
 }
 
-export async function login(email: string, password: string): Promise<{ access_token: string }> {
+export async function login(email: string, password: string): Promise<{ access_token: string; token_type: string; role: Role }> {
   const body = new URLSearchParams({ username: email, password });
 
   const res = await fetch(`${API_BASE_URL}/auth/login`, {

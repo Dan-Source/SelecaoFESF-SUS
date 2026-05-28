@@ -1,8 +1,16 @@
+import { describe, expect, it, jest } from "@jest/globals";
 import { submitLogin } from "../app/login/login-actions";
+
+type LoginUserFn = (email: string, password: string) => Promise<{
+  access_token: string;
+  token_type: string;
+  role: "patient" | "dentist";
+}>;
 
 describe("submitLogin", () => {
   it("logs in a patient and redirects to the patient area", async () => {
-    const loginUser = jest.fn().mockResolvedValue({ access_token: "token-123" });
+    const loginUser = jest.fn() as jest.MockedFunction<LoginUserFn>;
+    loginUser.mockResolvedValue({ access_token: "token-123", token_type: "bearer", role: "patient" });
     const setAuth = jest.fn();
     const navigate = jest.fn();
     const setMessage = jest.fn();
@@ -11,7 +19,7 @@ describe("submitLogin", () => {
     const showError = jest.fn();
 
     await submitLogin(
-      { email: "patient@email.com", password: "secret", role: "patient" },
+      { email: "patient@email.com", password: "secret" },
       { loginUser, setAuth, navigate, setMessage, setLoading, showSuccess, showError }
     );
 
@@ -26,7 +34,8 @@ describe("submitLogin", () => {
   });
 
   it("logs in a dentist and redirects to the dentist area", async () => {
-    const loginUser = jest.fn().mockResolvedValue({ access_token: "token-456" });
+    const loginUser = jest.fn() as jest.MockedFunction<LoginUserFn>;
+    loginUser.mockResolvedValue({ access_token: "token-456", token_type: "bearer", role: "dentist" });
     const setAuth = jest.fn();
     const navigate = jest.fn();
     const setMessage = jest.fn();
@@ -35,7 +44,7 @@ describe("submitLogin", () => {
     const showError = jest.fn();
 
     await submitLogin(
-      { email: "dentist@email.com", password: "secret", role: "dentist" },
+      { email: "dentist@email.com", password: "secret" },
       { loginUser, setAuth, navigate, setMessage, setLoading, showSuccess, showError }
     );
 
@@ -44,7 +53,8 @@ describe("submitLogin", () => {
   });
 
   it("surfaces login errors", async () => {
-    const loginUser = jest.fn().mockRejectedValue(new Error("Falha no login"));
+    const loginUser = jest.fn() as jest.MockedFunction<LoginUserFn>;
+    loginUser.mockRejectedValue(new Error("Falha no login"));
     const setAuth = jest.fn();
     const navigate = jest.fn();
     const setMessage = jest.fn();
@@ -53,7 +63,7 @@ describe("submitLogin", () => {
     const showError = jest.fn();
 
     await submitLogin(
-      { email: "user@email.com", password: "wrong", role: "patient" },
+      { email: "user@email.com", password: "wrong" },
       { loginUser, setAuth, navigate, setMessage, setLoading, showSuccess, showError }
     );
 

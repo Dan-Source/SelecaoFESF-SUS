@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import Token, UserRegister, UserResponse
+from app.schemas.auth import LoginResponse, UserRegister, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,11 +31,11 @@ def register(payload: UserRegister, db: Annotated[Session, Depends(get_db)]):
     return user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=LoginResponse)
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]):
     user = db.scalar(select(User).where(User.email == form_data.username))
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Email ou senha invalidos")
 
     token = create_access_token(str(user.id))
-    return Token(access_token=token)
+    return LoginResponse(access_token=token, role=user.role)

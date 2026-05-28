@@ -7,11 +7,9 @@ import { login } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/hooks/useToast";
-import { Role } from "@/types/models";
 import { submitLogin } from "./login-actions";
 
 export default function LoginPage() {
@@ -29,7 +27,6 @@ export default function LoginPage() {
       {
         email: String(formData.get("email")),
         password: String(formData.get("password")),
-        role: String(formData.get("role")) as Role,
       },
       {
         loginUser: login,
@@ -50,10 +47,6 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="form-grid">
           <Input id="email" name="email" type="email" label="Email" placeholder="seu@email.com" required />
           <Input id="password" name="password" type="password" label="Senha" placeholder="Digite sua senha" required />
-          <Select id="role" name="role" label="Perfil" defaultValue="patient">
-            <option value="patient">Paciente</option>
-            <option value="dentist">Odontologo</option>
-          </Select>
           <Button type="submit" loading={loading}>
             Entrar
           </Button>
