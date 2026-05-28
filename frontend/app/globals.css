@@ -387,6 +387,66 @@ button:disabled {
   border-width: 1px;
 }
 
+.register-page {
+  max-width: 896px;
+}
+
+.register-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.register-back {
+  justify-self: start;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.register-spacer {
+  justify-self: end;
+}
+
+.register-hero .card {
+  border: 1px solid rgba(8, 145, 178, 0.15);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(236, 254, 255, 0.95) 100%),
+    #ffffff;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.register-hero-content {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.register-eyebrow {
+  margin: 0 0 var(--space-lg);
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.register-form {
+  gap: var(--space-lg);
+}
+
+.role-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.role-toggle {
+  min-height: 52px;
+}
+
+.register-footer {
+  justify-content: center;
+}
+
 .field {
   display: grid;
   gap: var(--space-xs);

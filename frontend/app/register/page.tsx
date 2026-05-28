@@ -5,7 +5,6 @@ import Link from "next/link";
 import { registerUser } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/hooks/useToast";
@@ -15,6 +14,7 @@ import { submitRegister } from "./register-actions";
 export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<Role>("patient");
   const toast = useToast();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -41,27 +41,60 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="page-wrap" style={{ maxWidth: 896 }}>
-      <h1>Cadastro</h1>
-      <Card>
-        <form onSubmit={onSubmit} className="form-grid">
-          <Input id="name" name="name" label="Nome completo" placeholder="Digite seu nome" required />
-          <Input id="email" name="email" type="email" label="Email" placeholder="seu@email.com" required />
-          <Input id="password" name="password" type="password" label="Senha" placeholder="Crie uma senha segura" required />
-          <Select id="role" name="role" label="Perfil" defaultValue="patient">
-            <option value="patient">Paciente</option>
-            <option value="dentist">Odontologo</option>
-          </Select>
-          <Button type="submit" loading={loading}>
-            Cadastrar
-          </Button>
-          {message ? <Alert variant="success">{message}</Alert> : null}
-        </form>
-      </Card>
+    <main className="page-wrap register-page" style={{ maxWidth: 896 }}>
+      <div className="register-topbar">
+        <Link href="/" className="register-back">
+          Voltar
+        </Link>
+        <span aria-hidden="true" className="register-spacer" />
+      </div>
 
-      <div className="row">
+      <section className="register-hero">
+        <Card>
+          <div className="register-hero-content">
+            <p className="register-eyebrow">📝 Criar conta</p>
+            <form onSubmit={onSubmit} className="form-grid register-form">
+              <Input id="name" name="name" label="Nome completo" placeholder="João Silva" required />
+              <Input id="email" name="email" type="email" label="Email" placeholder="joao@email.com" required />
+              <Input id="password" name="password" type="password" label="Senha" placeholder="••••••••••" required />
+
+              <div className="field">
+                <span className="field-label">Sou:</span>
+                <div className="role-toggle-grid" role="group" aria-label="Escolha seu perfil">
+                  <Button
+                    type="button"
+                    variant={role === "patient" ? "primary" : "outline"}
+                    fullWidth
+                    className="role-toggle"
+                    onClick={() => setRole("patient")}
+                  >
+                    😊 Paciente
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={role === "dentist" ? "primary" : "outline"}
+                    fullWidth
+                    className="role-toggle"
+                    onClick={() => setRole("dentist")}
+                  >
+                    🦷 Dentista
+                  </Button>
+                </div>
+                <input type="hidden" name="role" value={role} />
+              </div>
+
+              <Button type="submit" loading={loading} fullWidth>
+                Cadastrar
+              </Button>
+              {message ? <Alert variant="success">{message}</Alert> : null}
+            </form>
+          </div>
+        </Card>
+      </section>
+
+      <div className="row register-footer">
         <span className="muted">Ja possui conta?</span>
-        <Link href="/login">Ir para login</Link>
+        <Link href="/login">Entrar</Link>
       </div>
     </main>
   );
