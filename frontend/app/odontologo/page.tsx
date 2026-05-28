@@ -41,14 +41,15 @@ export default function OdontologoPage() {
   async function onCreateSlot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!token) return;
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const start = String(formData.get("start"));
     const end = String(formData.get("end"));
 
     try {
       await createSlot(new Date(start).toISOString(), new Date(end).toISOString(), token);
       setMessage("Horario criado.");
-      event.currentTarget.reset();
+      form.reset();
       await refreshData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao criar horario");

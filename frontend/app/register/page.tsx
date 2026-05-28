@@ -9,7 +9,8 @@ export default function RegisterPage() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     try {
       await registerUser({
@@ -19,7 +20,7 @@ export default function RegisterPage() {
         role: String(formData.get("role")) as "patient" | "dentist",
       });
       setMessage("Cadastro realizado com sucesso. Faca login.");
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar");
     }
