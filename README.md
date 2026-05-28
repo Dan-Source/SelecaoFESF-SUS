@@ -17,7 +17,7 @@ Aplicacao full-stack com perfis de paciente e odontologo.
 4. Odontologo nao deleta horario com consulta.
 5. Cada usuario acessa apenas seus recursos privados.
 
-## Rodar com Docker
+## Rodar com Docker (desenvolvimento com hot reload)
 
 ```bash
 docker compose up --build
@@ -26,6 +26,11 @@ docker compose up --build
 - Backend: http://localhost:8000
 - Frontend: http://localhost:3000
 - Docs API: http://localhost:8000/docs
+
+Com esse compose em modo dev:
+
+- Alteracoes em `backend/app` recarregam a API automaticamente.
+- Alteracoes em `frontend` atualizam em tempo real no Next.js.
 
 ## Rodar localmente (sem Docker)
 
