@@ -23,27 +23,54 @@ export default function PacientePage() {
   const { appointments, setAppointments } = usePatientStore();
   const [dentists, setDentists] = useState<Dentist[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [search, setSearch] = useState("");
   const [selectedDentist, setSelectedDentist] = useState<number | null>(null);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingDentists, setLoadingDentists] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [bookingSlotId, setBookingSlotId] = useState<number | null>(null);
+  const [cancelingAppointmentId, setCancelingAppointmentId] = useState<number | null>(null);
   const toast = useToast();
 
-  async function refreshAppointments() {
+  const selectedDentistData = dentists.find((dentist) => dentist.id === selectedDentist) ?? null;
+  const filteredDentists = dentists.filter((dentist) => dentist.name.toLowerCase().includes(search.toLowerCase()));
+
+  async function refreshAppointments(showLoading = true) {
     if (!token) return;
-    const data = await listMyAppointments(token);
-    setAppointments(data);
+    try {
+      if (showLoading) {
+        setLoadingAppointments(true);
+      }
+      const data = await listMyAppointments(token);
+      setAppointments(data);
+    } finally {
+      if (showLoading) {
+        setLoadingAppointments(false);
+      }
+    }
   }
 
   async function loadDentists() {
     if (!token) return;
-    const data = await listDentists(token);
-    setDentists(data);
+    try {
+      setLoadingDentists(true);
+      const data = await listDentists(token);
+      setDentists(data);
+    } finally {
+      setLoadingDentists(false);
+    }
   }
 
   async function loadSlots(dentistId: number) {
     if (!token) return;
-    const data = await listDentistFreeSlots(dentistId, token);
-    setSlots(data);
+    try {
+      setLoadingSlots(true);
+      const data = await listDentistFreeSlots(dentistId, token);
+      setSlots(data);
+    } finally {
+      setLoadingSlots(false);
+    }
   }
 
   useEffect(() => {
@@ -66,120 +93,154 @@ export default function PacientePage() {
   }
 
   return (
-    <main className="page-wrap">
-      <h1>Area do Paciente</h1>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          logout();
-          setMessage("Sessao encerrada.");
-          toast.info("Sessao encerrada.");
-        }}
-      >
-        Sair
-      </Button>
-
-      <div className="stats-grid">
-        <Card title="Proximas consultas">
-          <p className="muted">{appointments.length} consulta(s) cadastrada(s).</p>
-        </Card>
-        <Card title="Dentistas disponiveis">
-          <p className="muted">{dentists.length} profissional(is) listado(s).</p>
-        </Card>
-      </div>
-
-      <Card title="Odontologos">
-        {loading ? <Spinner label="Carregando dados" /> : null}
-        <div className="list">
-          {dentists.map((dentist) => (
-            <div key={dentist.id} className="list-item">
-              <span>{dentist.name}</span>
-              <Button
-              onClick={() => {
-                setSelectedDentist(dentist.id);
-                loadSlots(dentist.id).catch((error) => setMessage(error.message));
-              }}
-            >
-              Ver horarios livres
-            </Button>
-            </div>
-          ))}
+    <main className="page-wrap patient-page">
+      <section className="patient-topbar">
+        <div>
+          <h1>Olá, paciente! 👋</h1>
+          <p className="muted">Escolha um profissional, veja horários livres e gerencie suas consultas.</p>
         </div>
-      </Card>
+      </section>
 
-      <Card title={`Horarios livres ${selectedDentist ? `(odontologo ${selectedDentist})` : ""}`}>
-        <div className="list">
-          {slots.map((slot) => (
-            <div key={slot.id} className="list-item">
-              <span>
-                {new Date(slot.start_time).toLocaleString()} - {new Date(slot.end_time).toLocaleString()}
-              </span>
-              <div className="row">
-                <Badge variant={slot.available ? "available" : "booked"}>{slot.available ? "Disponivel" : "Ocupado"}</Badge>
+      <Card title="📋 Lista de dentistas">
+        <div className="field patient-search-wrap">
+          <label htmlFor="dentist-search" className="field-label">
+            🔍 Buscar
+          </label>
+          <input
+            id="dentist-search"
+            placeholder="Digite o nome do dentista"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+
+        {loadingDentists ? <Spinner label="Carregando dentistas" /> : null}
+
+        {!loadingDentists && filteredDentists.length === 0 ? (
+          <p className="muted">Nenhum dentista encontrado para o filtro informado.</p>
+        ) : null}
+
+        <div className="dentist-grid">
+          {filteredDentists.map((dentist) => {
+            const isSelected = selectedDentist === dentist.id;
+
+            return (
+              <article key={dentist.id} className={`dentist-card ${isSelected ? "dentist-card-selected" : ""}`}>
+                <strong>🦷 {dentist.name}</strong>
+                <p className="muted">Profissional #{dentist.id}</p>
                 <Button
-              onClick={async () => {
-                try {
-                  setLoading(true);
-                  await createAppointment(slot.id, token);
-                  setMessage("Consulta agendada.");
-                  toast.success("Consulta agendada.");
-                  if (selectedDentist) {
-                    await loadSlots(selectedDentist);
+                  variant={isSelected ? "secondary" : "primary"}
+                  onClick={() => {
+                    setSelectedDentist(dentist.id);
+                    loadSlots(dentist.id).catch((error) => setMessage(error.message));
+                  }}
+                >
+                  Ver horários
+                </Button>
+              </article>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card title="🕐 Horários livres">
+        {!selectedDentistData ? <p className="muted">Selecione um dentista para ver os horários.</p> : null}
+
+        {selectedDentistData ? (
+          <p className="patient-selected-title">
+            {selectedDentistData.name} - horários disponíveis:
+          </p>
+        ) : null}
+
+        {loadingSlots ? <Spinner label="Carregando horários" /> : null}
+
+        {selectedDentistData && !loadingSlots && slots.length === 0 ? (
+          <p className="muted">Nenhum horário disponível para este profissional.</p>
+        ) : null}
+
+        <div className="slot-grid">
+          {slots.map((slot) => (
+            <article key={slot.id} className="slot-card">
+              <p className="slot-time">{new Date(slot.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className="muted slot-date">{new Date(slot.start_time).toLocaleDateString()}</p>
+              <Badge variant={slot.available ? "available" : "booked"}>{slot.available ? "Disponível" : "Ocupado"}</Badge>
+              <Button
+                loading={bookingSlotId === slot.id}
+                onClick={async () => {
+                  try {
+                    setBookingSlotId(slot.id);
+                    await createAppointment(slot.id, token);
+                    setMessage("Consulta agendada.");
+                    toast.success("Consulta agendada.");
+                    if (selectedDentist) {
+                      await loadSlots(selectedDentist);
+                    }
+                    await refreshAppointments(false);
+                  } catch (error) {
+                    const nextMessage = error instanceof Error ? error.message : "Erro ao agendar";
+                    setMessage(nextMessage);
+                    toast.error(nextMessage);
+                  } finally {
+                    setBookingSlotId(null);
                   }
-                  await refreshAppointments();
-                } catch (error) {
-                  const nextMessage = error instanceof Error ? error.message : "Erro ao agendar";
-                  setMessage(nextMessage);
-                  toast.error(nextMessage);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >
-              Marcar consulta
-            </Button>
-              </div>
-            </div>
+                }}
+              >
+                Agendar
+              </Button>
+            </article>
           ))}
         </div>
       </Card>
 
-      <Card title="Minhas consultas">
-        <div className="list">
-          {appointments.map((appointment) => (
-            <div key={appointment.id} className="list-item">
-              <span>
-                Consulta #{appointment.id} - Slot #{appointment.slot_id}
-              </span>
-              <Button
-                variant="danger"
-              onClick={async () => {
-                if (!window.confirm("Tem certeza que deseja cancelar esta consulta?")) {
-                  return;
-                }
+      <Card title="📅 Minhas consultas">
+        {loadingAppointments ? <Spinner label="Carregando consultas" /> : null}
 
-                try {
-                  setLoading(true);
-                  await cancelAppointment(appointment.id, token);
-                  setMessage("Consulta cancelada.");
-                  toast.warning("Consulta cancelada.");
-                  await refreshAppointments();
-                  if (selectedDentist) {
-                    await loadSlots(selectedDentist);
-                  }
-                } catch (error) {
-                  const nextMessage = error instanceof Error ? error.message : "Erro ao cancelar";
-                  setMessage(nextMessage);
-                  toast.error(nextMessage);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >
-              Cancelar
-            </Button>
-            </div>
-          ))}
+        {!loadingAppointments && appointments.length === 0 ? (
+          <p className="muted">Você não possui consultas agendadas.</p>
+        ) : null}
+
+        <div className="appointment-list">
+          {appointments.map((appointment) => {
+            const dentistName = dentists.find((dentist) => dentist.id === appointment.dentist_id)?.name ?? `Dentista #${appointment.dentist_id}`;
+
+            return (
+              <article key={appointment.id} className="appointment-item">
+                <div className="appointment-main">
+                  <span>📅 {new Date(appointment.created_at).toLocaleDateString()} - {new Date(appointment.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{dentistName}</span>
+                  <Badge variant="info">Agendada</Badge>
+                </div>
+                <Button
+                  variant="danger"
+                  loading={cancelingAppointmentId === appointment.id}
+                  onClick={async () => {
+                    if (!window.confirm("Tem certeza que deseja cancelar esta consulta?")) {
+                      return;
+                    }
+
+                    try {
+                      setCancelingAppointmentId(appointment.id);
+                      await cancelAppointment(appointment.id, token);
+                      setMessage("Consulta cancelada.");
+                      toast.warning("Consulta cancelada.");
+                      await refreshAppointments(false);
+                      if (selectedDentist) {
+                        await loadSlots(selectedDentist);
+                      }
+                    } catch (error) {
+                      const nextMessage = error instanceof Error ? error.message : "Erro ao cancelar";
+                      setMessage(nextMessage);
+                      toast.error(nextMessage);
+                    } finally {
+                      setCancelingAppointmentId(null);
+                    }
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </article>
+            );
+          })}
         </div>
       </Card>
 

@@ -447,6 +447,234 @@ button:disabled {
   justify-content: center;
 }
 
+.patient-page {
+  gap: var(--space-xl);
+}
+
+.patient-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.patient-topbar h1 {
+  margin-bottom: var(--space-xs);
+}
+
+.patient-search-wrap {
+  margin-bottom: var(--space-lg);
+}
+
+.dentist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.dentist-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: grid;
+  gap: var(--space-sm);
+  background: #ffffff;
+}
+
+.dentist-card-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.1);
+}
+
+.dentist-card p {
+  margin: 0;
+}
+
+.patient-selected-title {
+  margin: 0 0 var(--space-md);
+  font-weight: 600;
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-md);
+}
+
+.slot-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: var(--space-md);
+  display: grid;
+  gap: var(--space-sm);
+  justify-items: start;
+}
+
+.slot-time {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.slot-date {
+  margin: 0;
+}
+
+.appointment-list {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.appointment-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.appointment-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.dentist-page {
+  gap: var(--space-xl);
+}
+
+.dentist-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.dentist-topbar h1 {
+  margin-bottom: var(--space-xs);
+}
+
+.dentist-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.summary-tile {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: var(--space-md);
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.summary-tile p {
+  margin: 0;
+}
+
+.summary-tile strong {
+  font-size: 24px;
+}
+
+.dentist-slot-form {
+  margin-bottom: var(--space-lg);
+}
+
+.dentist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: var(--space-md);
+  z-index: 50;
+}
+
+.dentist-modal {
+  width: min(560px, 100%);
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+}
+
+.dentist-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.dentist-modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.dentist-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.dentist-slot-table,
+.dentist-appointment-table {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.dentist-slot-head,
+.dentist-slot-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(80px, 1fr) minmax(130px, 1fr) minmax(150px, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.dentist-slot-head {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.dentist-slot-row {
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .dentist-slot-head {
+    display: none;
+  }
+
+  .dentist-slot-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .dentist-modal {
+    padding: var(--space-md);
+  }
+
+  .dentist-modal-actions {
+    flex-direction: column;
+  }
+}
+
 .field {
   display: grid;
   gap: var(--space-xs);

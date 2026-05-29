@@ -17,18 +17,40 @@ export default function OdontologoPage() {
   const { token, role, logout } = useAuthStore();
   const { slots, setSlots } = useDentistStore();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [slotDate, setSlotDate] = useState("");
+  const [slotTime, setSlotTime] = useState("");
+  const [showSlotForm, setShowSlotForm] = useState(false);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [creatingSlot, setCreatingSlot] = useState(false);
+  const [removingSlotId, setRemovingSlotId] = useState<number | null>(null);
   const toast = useToast();
 
-  async function refreshData() {
+  async function refreshSlots() {
     if (!token) return;
-    const [slotData, appointmentData] = await Promise.all([
-      listMySlots(token),
-      listDentistAppointments(token),
-    ]);
-    setSlots(slotData);
-    setAppointments(appointmentData);
+    try {
+      setLoadingSlots(true);
+      const slotData = await listMySlots(token);
+      setSlots(slotData);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
+
+  async function refreshAppointments() {
+    if (!token) return;
+    try {
+      setLoadingAppointments(true);
+      const appointmentData = await listDentistAppointments(token);
+      setAppointments(appointmentData);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  }
+
+  async function refreshData() {
+    await Promise.all([refreshSlots(), refreshAppointments()]);
   }
 
   useEffect(() => {
@@ -43,26 +65,35 @@ export default function OdontologoPage() {
   async function onCreateSlot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!token) return;
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const start = String(formData.get("start"));
-    const end = String(formData.get("end"));
+
+    const startDateTime = new Date(`${slotDate}T${slotTime}`);
+    if (Number.isNaN(startDateTime.getTime())) {
+      setMessage("Informe uma data e horario validos.");
+      toast.error("Informe uma data e horario validos.");
+      return;
+    }
+
+    const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000);
 
     try {
-      setLoading(true);
-      await createSlot(new Date(start).toISOString(), new Date(end).toISOString(), token);
+      setCreatingSlot(true);
+      await createSlot(startDateTime.toISOString(), endDateTime.toISOString(), token);
       setMessage("Horario criado.");
       toast.success("Horario criado.");
-      form.reset();
+      setSlotDate("");
+      setSlotTime("");
+      setShowSlotForm(false);
       await refreshData();
     } catch (error) {
       const nextMessage = error instanceof Error ? error.message : "Erro ao criar horario";
       setMessage(nextMessage);
       toast.error(nextMessage);
     } finally {
-      setLoading(false);
+      setCreatingSlot(false);
     }
   }
+
+  const slotById = new Map(slots.map((slot) => [slot.id, slot]));
 
   if (!token || role !== "dentist") {
     return (
@@ -74,90 +105,181 @@ export default function OdontologoPage() {
   }
 
   return (
-    <main className="page-wrap">
-      <h1>Area do Odontologo</h1>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          logout();
-          setMessage("Sessao encerrada.");
-          toast.info("Sessao encerrada.");
-        }}
-      >
-        Sair
-      </Button>
+    <main className="page-wrap dentist-page">
+      <section className="dentist-topbar">
+        <div>
+          <h1>Ola, doutor(a)! 👨‍⚕️</h1>
+          <p className="muted">Gerencie horarios livres e acompanhe consultas vinculadas.</p>
+        </div>
+      </section>
 
-      <div className="stats-grid">
-        <Card title="Meus horarios">
-          <p className="muted">{slots.length} horario(s) cadastrado(s).</p>
-        </Card>
-        <Card title="Consultas">
-          <p className="muted">{appointments.length} consulta(s) vinculada(s).</p>
-        </Card>
-      </div>
+      <Card title="📊 Resumo">
+        <div className="dentist-summary-grid">
+          <article className="summary-tile">
+            <p className="muted">Total de horarios</p>
+            <strong>{slots.length}</strong>
+          </article>
+          <article className="summary-tile">
+            <p className="muted">Consultas agendadas</p>
+            <strong>{appointments.length}</strong>
+          </article>
+        </div>
+      </Card>
 
-      <Card title="Criar horario disponivel">
-        <form onSubmit={onCreateSlot} className="form-grid">
-          <Input id="start" name="start" type="datetime-local" label="Inicio" required />
-          <Input id="end" name="end" type="datetime-local" label="Fim" required />
-          <Button type="submit" loading={loading}>
-            Criar
+      <Card
+        title="🕐 Meus horarios"
+        actions={
+          <Button type="button" variant="secondary" onClick={() => setShowSlotForm(true)}>
+            + Novo horario
           </Button>
-        </form>
-      </Card>
+        }
+      >
+        {loadingSlots ? <Spinner label="Atualizando horarios" /> : null}
 
-      <Card title="Meus horarios">
-        {loading ? <Spinner label="Atualizando dados" /> : null}
-        <div className="list">
+        {!loadingSlots && slots.length === 0 ? <p className="muted">Nenhum horario cadastrado ainda.</p> : null}
+
+        <div className="dentist-slot-table">
+          {!loadingSlots && slots.length > 0 ? (
+            <div className="dentist-slot-head">
+              <span>Data</span>
+              <span>Hora</span>
+              <span>Status</span>
+              <span>Acoes</span>
+            </div>
+          ) : null}
+
           {slots.map((slot) => (
-            <div key={slot.id} className="list-item">
-              <span>
-                {new Date(slot.start_time).toLocaleString()} - {new Date(slot.end_time).toLocaleString()}
-              </span>
-              <div className="row">
-                <Badge variant={slot.available ? "available" : "booked"}>{slot.available ? "Livre" : "Ocupado"}</Badge>
-                <Button
-                  variant="danger"
-              onClick={async () => {
-                if (!window.confirm("Tem certeza que deseja remover este horario?")) {
-                  return;
-                }
+            <article key={slot.id} className="dentist-slot-row">
+              <span>{new Date(slot.start_time).toLocaleDateString()}</span>
+              <span>{new Date(slot.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+              <Badge variant={slot.available ? "available" : "booked"}>{slot.available ? "🟢 Livre" : "🔴 Ocupado"}</Badge>
+              <div>
+                {slot.available ? (
+                  <Button
+                    variant="danger"
+                    loading={removingSlotId === slot.id}
+                    onClick={async () => {
+                      if (!window.confirm("Tem certeza que deseja remover este horario?")) {
+                        return;
+                      }
 
-                try {
-                  setLoading(true);
-                  await deleteSlot(slot.id, token);
-                  setMessage("Horario removido.");
-                  toast.warning("Horario removido.");
-                  await refreshData();
-                } catch (error) {
-                  const nextMessage = error instanceof Error ? error.message : "Erro ao remover horario";
-                  setMessage(nextMessage);
-                  toast.error(nextMessage);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >
-              Deletar
-            </Button>
+                      try {
+                        setRemovingSlotId(slot.id);
+                        await deleteSlot(slot.id, token);
+                        setMessage("Horario removido.");
+                        toast.warning("Horario removido.");
+                        await refreshData();
+                      } catch (error) {
+                        const nextMessage = error instanceof Error ? error.message : "Erro ao remover horario";
+                        setMessage(nextMessage);
+                        toast.error(nextMessage);
+                      } finally {
+                        setRemovingSlotId(null);
+                      }
+                    }}
+                  >
+                    🗑️ Remover
+                  </Button>
+                ) : (
+                  <span className="muted">Com consulta</span>
+                )}
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </Card>
 
-      <Card title="Consultas agendadas comigo">
-        <div className="list">
-          {appointments.map((appointment) => (
-            <div key={appointment.id} className="list-item">
-              <span>
-                Consulta #{appointment.id} | Paciente #{appointment.patient_id} | Slot #{appointment.slot_id}
-              </span>
-              <Badge variant="info">Ativo</Badge>
+      <Card title="📋 Consultas vinculadas">
+        {loadingAppointments ? <Spinner label="Carregando consultas" /> : null}
+
+        {!loadingAppointments && appointments.length === 0 ? (
+          <p className="muted">Voce ainda nao possui consultas vinculadas.</p>
+        ) : null}
+
+        <div className="dentist-appointment-table">
+          {!loadingAppointments && appointments.length > 0 ? (
+            <div className="dentist-slot-head">
+              <span>Data</span>
+              <span>Hora</span>
+              <span>Paciente</span>
+              <span>Status</span>
             </div>
-          ))}
+          ) : null}
+
+          {appointments.map((appointment) => {
+            const appointmentSlot = slotById.get(appointment.slot_id);
+            const startTime = appointmentSlot?.start_time ?? appointment.created_at;
+
+            return (
+              <article key={appointment.id} className="dentist-slot-row">
+                <span>{new Date(startTime).toLocaleDateString()}</span>
+                <span>{new Date(startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                <span>Paciente #{appointment.patient_id}</span>
+                <Badge variant="info">Agendada</Badge>
+              </article>
+            );
+          })}
         </div>
       </Card>
+
+      {showSlotForm ? (
+        <div className="dentist-modal-backdrop" role="dialog" aria-modal="true" aria-label="Novo horario">
+          <div className="dentist-modal">
+            <div className="dentist-modal-header">
+              <h2>➕ Novo Horário</h2>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowSlotForm(false);
+                  setSlotDate("");
+                  setSlotTime("");
+                }}
+              >
+                X
+              </Button>
+            </div>
+
+            <form onSubmit={onCreateSlot} className="form-grid dentist-slot-form">
+              <Input
+                id="slotDate"
+                name="slotDate"
+                type="date"
+                label="Data"
+                required
+                value={slotDate}
+                onChange={(event) => setSlotDate(event.target.value)}
+              />
+              <Input
+                id="slotTime"
+                name="slotTime"
+                type="time"
+                label="Horário"
+                required
+                value={slotTime}
+                onChange={(event) => setSlotTime(event.target.value)}
+              />
+
+              <div className="dentist-modal-actions">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowSlotForm(false);
+                    setSlotDate("");
+                    setSlotTime("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" loading={creatingSlot}>
+                  Criar ✓
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {message ? <Alert variant="info">{message}</Alert> : null}
     </main>
