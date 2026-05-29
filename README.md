@@ -198,7 +198,7 @@ Criar nova migração:
 
 ```bash
 cd backend
-uv run alembic revision -m "descricao"
+uv run alembic revision -m "Seleção SUS"
 ```
 
 Aplicar nova migração:
