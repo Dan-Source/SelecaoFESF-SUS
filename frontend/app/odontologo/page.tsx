@@ -14,8 +14,9 @@ import { useToast } from "@/hooks/useToast";
 import { Appointment } from "@/types/models";
 
 export default function OdontologoPage() {
-  const { token, role, logout } = useAuthStore();
+  const { token, role } = useAuthStore();
   const { slots, setSlots } = useDentistStore();
+  const [authHydrated, setAuthHydrated] = useState(useAuthStore.persist.hasHydrated());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("");
@@ -54,13 +55,34 @@ export default function OdontologoPage() {
   }
 
   useEffect(() => {
+    const unsubscribeHydrate = useAuthStore.persist.onHydrate(() => {
+      setAuthHydrated(false);
+    });
+
+    const unsubscribeFinishHydration = useAuthStore.persist.onFinishHydration(() => {
+      setAuthHydrated(true);
+    });
+
+    setAuthHydrated(useAuthStore.persist.hasHydrated());
+
+    return () => {
+      unsubscribeHydrate();
+      unsubscribeFinishHydration();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authHydrated) {
+      return;
+    }
+
     if (!token || role !== "dentist") {
       setMessage("Faca login como odontologo.");
       return;
     }
 
     refreshData().catch((error) => setMessage(error.message));
-  }, [token, role]);
+  }, [authHydrated, token, role]);
 
   async function onCreateSlot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -94,6 +116,14 @@ export default function OdontologoPage() {
   }
 
   const slotById = new Map(slots.map((slot) => [slot.id, slot]));
+
+  if (!authHydrated) {
+    return (
+      <main className="page-wrap page-loading">
+        <Spinner label="Carregando sua area" />
+      </main>
+    );
+  }
 
   if (!token || role !== "dentist") {
     return (

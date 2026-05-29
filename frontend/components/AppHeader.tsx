@@ -14,10 +14,7 @@ export function AppHeader() {
     <header className="app-header">
       <div className="app-header-inner">
         <Link href="/" className="brand" aria-label="Ir para a tela inicial">
-          <span className="brand-badge" aria-hidden="true">
-            DC
-          </span>
-          <span>DentalCare</span>
+          <span>Dental Care</span>
         </Link>
 
         <nav className="top-nav" aria-label="Navegacao principal">

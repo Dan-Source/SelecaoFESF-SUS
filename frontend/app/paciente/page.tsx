@@ -19,8 +19,9 @@ import { useToast } from "@/hooks/useToast";
 import { Dentist, Slot } from "@/types/models";
 
 export default function PacientePage() {
-  const { token, role, logout } = useAuthStore();
+  const { token, role } = useAuthStore();
   const { appointments, setAppointments } = usePatientStore();
+  const [authHydrated, setAuthHydrated] = useState(useAuthStore.persist.hasHydrated());
   const [dentists, setDentists] = useState<Dentist[]>([]);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [search, setSearch] = useState("");
@@ -74,6 +75,27 @@ export default function PacientePage() {
   }
 
   useEffect(() => {
+    const unsubscribeHydrate = useAuthStore.persist.onHydrate(() => {
+      setAuthHydrated(false);
+    });
+
+    const unsubscribeFinishHydration = useAuthStore.persist.onFinishHydration(() => {
+      setAuthHydrated(true);
+    });
+
+    setAuthHydrated(useAuthStore.persist.hasHydrated());
+
+    return () => {
+      unsubscribeHydrate();
+      unsubscribeFinishHydration();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authHydrated) {
+      return;
+    }
+
     if (!token || role !== "patient") {
       setMessage("Faca login como paciente.");
       return;
@@ -81,9 +103,17 @@ export default function PacientePage() {
 
     loadDentists().catch((error) => setMessage(error.message));
     refreshAppointments().catch((error) => setMessage(error.message));
-  }, [token, role]);
+  }, [authHydrated, token, role]);
 
-  if (!token || role !== "patient") {
+  if (!authHydrated) {
+    return (
+      <main className="page-wrap page-loading">
+        <Spinner label="Carregando sua area" />
+      </main>
+    );
+  }
+
+  if (((!token || role !== "patient") && message) || (!token || role !== "patient")) {
     return (
       <main className="page-wrap">
         <h1>Area do Paciente</h1>
@@ -167,6 +197,10 @@ export default function PacientePage() {
               <Button
                 loading={bookingSlotId === slot.id}
                 onClick={async () => {
+                  if (!token) {
+                    return;
+                  }
+
                   try {
                     setBookingSlotId(slot.id);
                     await createAppointment(slot.id, token);
@@ -214,6 +248,10 @@ export default function PacientePage() {
                   variant="danger"
                   loading={cancelingAppointmentId === appointment.id}
                   onClick={async () => {
+                    if (!token) {
+                      return;
+                    }
+
                     if (!window.confirm("Tem certeza que deseja cancelar esta consulta?")) {
                       return;
                     }

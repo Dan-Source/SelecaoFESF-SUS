@@ -145,6 +145,12 @@ a:hover {
   gap: var(--space-lg);
 }
 
+.page-loading {
+  min-height: 55vh;
+  place-content: center;
+  justify-items: center;
+}
+
 .home-page {
   max-width: 1120px;
   padding-top: var(--space-2xl);
