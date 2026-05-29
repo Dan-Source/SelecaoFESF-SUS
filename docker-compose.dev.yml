@@ -1,0 +1,47 @@
+services:
+  backend:
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://odonto:odonto@postgres:5432/odonto}
+      - REDIS_URL=${REDIS_URL:-redis://:odonto@redis:6379/0}
+      - REDIS_CACHE_TTL_SECONDS=${REDIS_CACHE_TTL_SECONDS:-30}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-development-only}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app"
+
+  postgres:
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-odonto}
+      - POSTGRES_USER=${POSTGRES_USER:-odonto}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odonto}
+    ports:
+      - "5432:5432"
+
+  redis:
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-odonto}
+    ports:
+      - "6380:6379"
+
+  frontend:
+    user: "0:0"
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+
+volumes:
+  frontend_node_modules:
+  frontend_next:

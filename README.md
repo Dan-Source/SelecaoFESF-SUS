@@ -20,7 +20,7 @@ Aplicacao full-stack com perfis de paciente e odontologo.
 ## Rodar com Docker (desenvolvimento com hot reload)
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 - Backend: http://localhost:8000
@@ -33,6 +33,26 @@ Com esse compose em modo dev:
 
 - Alteracoes em `backend/app` recarregam a API automaticamente.
 - Alteracoes em `frontend` atualizam em tempo real no Next.js.
+
+## Rodar com Docker (producao)
+
+Defina as variaveis obrigatorias e rode:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+```
+
+Variaveis obrigatorias em producao:
+
+- `DATABASE_URL`
+- `REDIS_URL`
+- `REDIS_PASSWORD`
+- `JWT_SECRET_KEY`
+- `CORS_ORIGINS`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `NEXT_PUBLIC_API_URL`
 
 ## Rodar localmente (sem Docker)
 
@@ -69,7 +89,7 @@ TEST_DATABASE_URL=postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test 
 Caso o banco `odonto_test` nao exista, crie antes de rodar os testes:
 
 ```bash
-docker exec odonto_postgres psql -U odonto -d postgres -c "CREATE DATABASE odonto_test;"
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec postgres psql -U odonto -d postgres -c "CREATE DATABASE odonto_test;"
 ```
 
 ### Frontend
