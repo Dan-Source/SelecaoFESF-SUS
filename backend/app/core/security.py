@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.db.session import get_db
 from app.models.user import User, UserRole
 
@@ -32,29 +33,24 @@ def create_access_token(subject: str) -> str:
 def get_current_user(
     db: Annotated[Session, Depends(get_db)], token: Annotated[str, Depends(oauth2_scheme)]
 ) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Credenciais invalidas",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         user_id = payload.get("sub")
         if user_id is None:
-            raise credentials_exception
+            raise AuthenticationError()
     except JWTError as exc:
-        raise credentials_exception from exc
+        raise AuthenticationError() from exc
 
     user = db.get(User, int(user_id))
     if not user:
-        raise credentials_exception
+        raise AuthenticationError()
     return user
 
 
 def require_role(expected_role: UserRole):
     def role_checker(current_user: Annotated[User, Depends(get_current_user)]) -> User:
         if current_user.role != expected_role:
-            raise HTTPException(status_code=403, detail="Permissao insuficiente")
+            raise AuthorizationError()
         return current_user
 
     return role_checker

@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import ConflictError, ResourceNotFoundError, ValidationError
 from app.models.appointment import Appointment
 from app.models.schedule_slot import ScheduleSlot
 
@@ -12,9 +12,9 @@ from app.models.schedule_slot import ScheduleSlot
 def book_appointment(db: Session, patient_id: int, slot_id: int) -> Appointment:
     slot = db.scalar(select(ScheduleSlot).where(ScheduleSlot.id == slot_id).with_for_update())
     if not slot:
-        raise HTTPException(status_code=404, detail="Horario nao encontrado")
+        raise ResourceNotFoundError("Horario nao encontrado")
     if not slot.available:
-        raise HTTPException(status_code=400, detail="Horario indisponivel")
+        raise ValidationError("Horario indisponivel")
 
     slot.available = False
     appointment = Appointment(
@@ -29,7 +29,7 @@ def book_appointment(db: Session, patient_id: int, slot_id: int) -> Appointment:
         db.commit()
     except SQLAlchemyError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Conflito ao agendar horario") from exc
+        raise ConflictError("Conflito ao agendar horario") from exc
 
     db.refresh(appointment)
     return appointment
@@ -48,7 +48,7 @@ def list_dentist_appointments(db: Session, dentist_id: int) -> list[Appointment]
 def cancel_appointment(db: Session, patient_id: int, appointment_id: int) -> int:
     appointment = db.scalar(select(Appointment).where(Appointment.id == appointment_id).with_for_update())
     if appointment is None or appointment.patient_id != patient_id:
-        raise HTTPException(status_code=404, detail="Consulta nao encontrada")
+        raise ResourceNotFoundError("Consulta nao encontrada")
 
     slot = db.scalar(select(ScheduleSlot).where(ScheduleSlot.id == appointment.slot_id).with_for_update())
     if slot:
@@ -56,5 +56,9 @@ def cancel_appointment(db: Session, patient_id: int, appointment_id: int) -> int
 
     dentist_id = appointment.dentist_id
     db.delete(appointment)
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise ConflictError("Conflito ao cancelar consulta") from exc
     return dentist_id

@@ -4,17 +4,25 @@ services:
       context: ./backend
     container_name: odonto_backend
     environment:
-      - DATABASE_URL=postgresql+psycopg://odonto:odonto@postgres:5432/odonto
-      - REDIS_URL=redis://redis:6379/0
-      - REDIS_CACHE_TTL_SECONDS=30
-      - JWT_SECRET_KEY=super-secret-change-me
-      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg://odonto:odonto@postgres:5432/odonto}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - REDIS_CACHE_TTL_SECONDS=${REDIS_CACHE_TTL_SECONDS:-30}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-development-only}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
       - ./backend/data:/app/data
-    command: sh -c "uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app"
+    command: >
+      sh -c "uv run alembic upgrade head &&
+      if [ \"$ENVIRONMENT\" = \"development\" ]; then
+        uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app;
+      else
+        uv run uvicorn app.main:app --host 0.0.0.0 --port 8000;
+      fi"
     depends_on:
       postgres:
         condition: service_healthy

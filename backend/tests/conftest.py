@@ -1,4 +1,5 @@
 import os
+import secrets
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,7 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 os.environ.setdefault("DATABASE_URL", os.environ.get("TEST_DATABASE_URL", "postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test"))
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret")
+os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("JWT_SECRET_KEY", secrets.token_urlsafe(32))
 
 from app.db.base import Base
 from app.db.session import get_db
