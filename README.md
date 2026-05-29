@@ -1,64 +1,142 @@
-# Sistema de Agendamento Odontologico
+# Seleção FESF-SUS
 
-Aplicacao full-stack com perfis de paciente e odontologo.
+Aplicação full-stack para agendamento odontológico com perfis de paciente e odontólogo.
 
-## Stack
+## Objetivo deste README
 
-- Backend: FastAPI, SQLAlchemy, PostgreSQL, Redis cache, JWT via OAuth2 Password Flow
-- Frontend: Next.js (App Router), TypeScript, Zustand
-- Testes: Pytest (backend) e Jest (frontend)
-- Conteinerizacao: Docker + docker-compose
+Este guia foi refinado para banca avaliadora:
 
-## Regras de negocio implementadas
+1. Comprovar cada critério com links diretos para arquivos/pastas do repositório.
+2. Permitir validação rápida do sistema com e sem Docker.
+3. Trazer passo a passo objetivo, sem configuração desnecessária.
 
-1. Mesmo horario nao pode ter duas consultas.
-2. Paciente so agenda horario disponivel.
-3. Cancelar consulta libera horario.
-4. Odontologo nao deleta horario com consulta.
-5. Cada usuario acessa apenas seus recursos privados.
+> O README original foi preservado em [docs/README.md](docs/README.md) para referência histórica.
 
-## Rodar com Docker (desenvolvimento com hot reload)
+## Comprovação dos critérios (com links)
+
+### Seleção FESF-SUS - 1 F.C
+
+**Requisito:** API funcional em Python (FastAPI + SQLAlchemy) e Frontend React/Next.js com Zustand.
+
+**Backend (FastAPI + SQLAlchemy)**
+
+- App FastAPI e healthcheck: [backend/app/main.py](backend/app/main.py)
+- Rotas da API:
+	- [backend/app/api/routes/auth.py](backend/app/api/routes/auth.py)
+	- [backend/app/api/routes/dentists.py](backend/app/api/routes/dentists.py)
+	- [backend/app/api/routes/patients.py](backend/app/api/routes/patients.py)
+- Sessão/banco SQLAlchemy:
+	- [backend/app/db/session.py](backend/app/db/session.py)
+	- [backend/app/db/base.py](backend/app/db/base.py)
+- Modelos SQLAlchemy:
+	- [backend/app/models/user.py](backend/app/models/user.py)
+	- [backend/app/models/schedule_slot.py](backend/app/models/schedule_slot.py)
+	- [backend/app/models/appointment.py](backend/app/models/appointment.py)
+- Dependências FastAPI/SQLAlchemy: [backend/pyproject.toml](backend/pyproject.toml)
+
+**Frontend (Next.js + Zustand)**
+
+- App Router Next.js: [frontend/app](frontend/app)
+- Store Zustand (autenticação): [frontend/store/auth.ts](frontend/store/auth.ts)
+- Outras stores Zustand:
+	- [frontend/store/dentist.ts](frontend/store/dentist.ts)
+	- [frontend/store/patient.ts](frontend/store/patient.ts)
+- Dependências Next/React/Zustand: [frontend/package.json](frontend/package.json)
+
+### Seleção FESF-SUS - 2 F.C
+
+**Requisito:** conteinerização funcional com Docker + docker-compose + OAuth2.
+
+- Compose base: [docker-compose.yml](docker-compose.yml)
+- Compose desenvolvimento: [docker-compose.dev.yml](docker-compose.dev.yml)
+- Compose produção: [docker-compose.prod.yml](docker-compose.prod.yml)
+- Dockerfile backend: [backend/Dockerfile](backend/Dockerfile)
+- Dockerfile frontend: [frontend/Dockerfile](frontend/Dockerfile)
+
+**OAuth2/JWT implementado em:**
+
+- Segurança e `OAuth2PasswordBearer`: [backend/app/core/security.py](backend/app/core/security.py)
+- Login com `OAuth2PasswordRequestForm`: [backend/app/api/routes/auth.py](backend/app/api/routes/auth.py)
+
+### Seleção FESF-SUS - 3 F.C
+
+**Requisito:** implantação funcional de Redis (cache).
+
+- Serviço Redis no Docker: [docker-compose.yml](docker-compose.yml)
+- Configuração Redis da aplicação: [backend/app/core/config.py](backend/app/core/config.py)
+- Camada de cache Redis: [backend/app/core/cache.py](backend/app/core/cache.py)
+- Invalidação de cache: [backend/app/core/cache_utils.py](backend/app/core/cache_utils.py)
+- Uso de cache nas rotas:
+	- [backend/app/api/routes/dentists.py](backend/app/api/routes/dentists.py)
+	- [backend/app/api/routes/patients.py](backend/app/api/routes/patients.py)
+
+### Seleção FESF-SUS - 4 F.C
+
+**Requisito:** testes unitários e de integração (Pytest e/ou Jest).
+
+- Testes backend (pytest): [backend/tests](backend/tests)
+- Unitários backend: [backend/tests/unit/test_services.py](backend/tests/unit/test_services.py)
+- Integração backend (fluxo completo): [backend/tests/integration/test_api_flow.py](backend/tests/integration/test_api_flow.py)
+- Configuração pytest: [backend/pyproject.toml](backend/pyproject.toml)
+
+- Testes frontend (jest): [frontend/tests](frontend/tests)
+- Testes login: [frontend/tests/login-actions.test.ts](frontend/tests/login-actions.test.ts)
+- Testes cadastro: [frontend/tests/register-actions.test.ts](frontend/tests/register-actions.test.ts)
+- Configuração jest: [frontend/jest.config.ts](frontend/jest.config.ts)
+
+## Regras de negócio implementadas
+
+1. Mesmo horário não pode ter duas consultas.
+2. Paciente só agenda horário disponível.
+3. Cancelar consulta libera horário.
+4. Odontólogo não deleta horário com consulta.
+5. Cada usuário acessa apenas seus recursos privados.
+
+## Validação rápida (5 minutos)
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-- Backend: http://localhost:8000
-- Frontend: http://localhost:3000
-- Docs API: http://localhost:8000/docs
-- PostgreSQL: localhost:5432
-- Redis: localhost:6380
+Depois valide:
 
-Com esse compose em modo dev:
+1. Frontend em http://localhost:3000
+2. Backend em http://localhost:8000
+3. Swagger em http://localhost:8000/docs
+4. Healthcheck em http://localhost:8000/health
 
-- Alteracoes em `backend/app` recarregam a API automaticamente.
-- Alteracoes em `frontend` atualizam em tempo real no Next.js.
+## Rodar com Docker (desenvolvimento)
 
-## Rodar com Docker (producao)
-
-Defina as variaveis obrigatorias e rode:
+### Subir todos os serviços
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-Variaveis obrigatorias em producao:
+Serviços esperados:
+- Backend
+- Frontend
+- PostgreSQL
+- Redis
 
-- `DATABASE_URL`
-- `REDIS_URL`
-- `REDIS_PASSWORD`
-- `JWT_SECRET_KEY`
-- `CORS_ORIGINS`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
-- `NEXT_PUBLIC_API_URL`
+Comportamento em dev:
 
-## Rodar localmente (sem Docker)
+- Alterações em `backend/app` recarregam a API automaticamente.
+- Alterações em `frontend` atualizam no Next.js em tempo real.
 
-### Backend
+## Rodar sem Docker (local mais eficiente)
 
-Requisito: Python 3.12.
+Fluxo recomendado: subir só infraestrutura com Docker (PostgreSQL + Redis) e rodar backend/frontend localmente.
+
+### 1) Subir apenas PostgreSQL e Redis
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis
+```
+
+### 2) Backend local
+
+Requisitos: Python 3.12 e `uv`.
 
 ```bash
 cd backend
@@ -69,7 +147,9 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
-### Frontend
+### 3) Frontend local
+
+Requisito: Node.js 20+.
 
 ```bash
 cd frontend
@@ -77,53 +157,61 @@ npm install
 npm run dev
 ```
 
+### 4) Verificação local
+
+- Backend: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+- Frontend: http://localhost:3000
+
 ## Testes
 
-### Backend
+### Backend (pytest)
 
 ```bash
 cd backend
 TEST_DATABASE_URL=postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test uv run pytest
 ```
 
-Caso o banco `odonto_test` nao exista, crie antes de rodar os testes:
+Se o banco de teste `odonto_test` não existir:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml exec postgres psql -U odonto -d postgres -c "CREATE DATABASE odonto_test;"
 ```
 
-### Frontend
+### Frontend (jest)
 
 ```bash
 cd frontend
 npm test
 ```
 
-### Banco (migracoes)
+## Banco de dados (migrações)
+
+Aplicar migrações:
 
 ```bash
 cd backend
 uv run alembic upgrade head
 ```
 
-Para gerar uma nova migracao:
+Criar nova migração:
 
 ```bash
 cd backend
 uv run alembic revision -m "descricao"
 ```
 
-E depois aplicar:
+Aplicar nova migração:
 
 ```bash
 cd backend
 uv run alembic upgrade head
 ```
 
-## Fluxo esperado
+## Fluxo funcional esperado
 
-1. Cadastrar usuario com role `dentist` ou `patient`.
+1. Cadastrar usuário com role `dentist` ou `patient`.
 2. Fazer login para obter JWT.
-3. Odontologo cria horarios.
-4. Paciente lista odontologos, consulta horarios livres e agenda.
-5. Paciente cancela e horario volta a ficar disponivel.
+3. Odontólogo cria horários.
+4. Paciente lista odontólogos, consulta horários livres e agenda.
+5. Paciente cancela e horário volta a ficar disponível.
