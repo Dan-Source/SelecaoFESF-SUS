@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
+from app.core.cache import cache_delete_many, cache_get_json, cache_set_json
+from app.core.cache import dentist_slots_all_key, dentist_slots_free_key
 from app.core.security import require_role
 from app.db.session import get_db
 from app.models.user import User, UserRole
@@ -20,7 +22,12 @@ def create_my_slot(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.DENTIST))],
 ):
-    return create_slot(db, current_user.id, payload.start_time, payload.end_time)
+    slot = create_slot(db, current_user.id, payload.start_time, payload.end_time)
+    cache_delete_many([
+        dentist_slots_all_key(current_user.id),
+        dentist_slots_free_key(current_user.id),
+    ])
+    return slot
 
 
 @router.get("/me/slots", response_model=list[ScheduleResponse])
@@ -28,7 +35,15 @@ def list_my_slots(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_role(UserRole.DENTIST))],
 ):
-    return list_dentist_slots(db, current_user.id)
+    key = dentist_slots_all_key(current_user.id)
+    cached = cache_get_json(key)
+    if cached is not None:
+        return cached
+
+    slots = list_dentist_slots(db, current_user.id)
+    payload = [ScheduleResponse.model_validate(item).model_dump(mode="json") for item in slots]
+    cache_set_json(key, payload)
+    return slots
 
 
 @router.delete("/me/slots/{slot_id}", status_code=204)
@@ -38,6 +53,10 @@ def delete_my_slot(
     current_user: Annotated[User, Depends(require_role(UserRole.DENTIST))],
 ):
     delete_dentist_slot(db, current_user.id, slot_id)
+    cache_delete_many([
+        dentist_slots_all_key(current_user.id),
+        dentist_slots_free_key(current_user.id),
+    ])
     return Response(status_code=204)
 
 

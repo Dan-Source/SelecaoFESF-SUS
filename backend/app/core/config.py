@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
-    database_url: str = "sqlite:///./data/app.db"
+    database_url: str = "postgresql+psycopg://odonto:odonto@localhost:5432/odonto"
+    redis_url: str | None = "redis://localhost:6379/0"
+    redis_cache_ttl_seconds: int = 30
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -5,15 +5,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-os.environ["DATABASE_URL"] = "sqlite:///./test.db"
-os.environ["JWT_SECRET_KEY"] = "test-secret"
+os.environ.setdefault("DATABASE_URL", os.environ.get("TEST_DATABASE_URL", "postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test"))
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret")
 
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 
-TEST_DB_URL = "sqlite:///./test.db"
-engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+TEST_DB_URL = os.environ.get("TEST_DATABASE_URL", "postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test")
+engine = create_engine(
+    TEST_DB_URL,
+    connect_args={"check_same_thread": False} if TEST_DB_URL.startswith("sqlite") else {},
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

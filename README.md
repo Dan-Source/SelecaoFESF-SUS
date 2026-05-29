@@ -4,7 +4,7 @@ Aplicacao full-stack com perfis de paciente e odontologo.
 
 ## Stack
 
-- Backend: FastAPI, SQLAlchemy, SQLite, JWT via OAuth2 Password Flow
+- Backend: FastAPI, SQLAlchemy, PostgreSQL, Redis cache, JWT via OAuth2 Password Flow
 - Frontend: Next.js (App Router), TypeScript, Zustand
 - Testes: Pytest (backend) e Jest (frontend)
 - Conteinerizacao: Docker + docker-compose
@@ -26,6 +26,8 @@ docker compose up --build
 - Backend: http://localhost:8000
 - Frontend: http://localhost:3000
 - Docs API: http://localhost:8000/docs
+- PostgreSQL: localhost:5432
+- Redis: localhost:6380
 
 Com esse compose em modo dev:
 
@@ -42,6 +44,8 @@ Requisito: Python 3.12.
 cd backend
 uv python install 3.12
 uv sync --group dev
+cp .env.example .env
+uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
@@ -59,7 +63,13 @@ npm run dev
 
 ```bash
 cd backend
-uv run pytest
+TEST_DATABASE_URL=postgresql+psycopg://odonto:odonto@localhost:5432/odonto_test uv run pytest
+```
+
+Caso o banco `odonto_test` nao exista, crie antes de rodar os testes:
+
+```bash
+docker exec odonto_postgres psql -U odonto -d postgres -c "CREATE DATABASE odonto_test;"
 ```
 
 ### Frontend
@@ -67,6 +77,27 @@ uv run pytest
 ```bash
 cd frontend
 npm test
+```
+
+### Banco (migracoes)
+
+```bash
+cd backend
+uv run alembic upgrade head
+```
+
+Para gerar uma nova migracao:
+
+```bash
+cd backend
+uv run alembic revision -m "descricao"
+```
+
+E depois aplicar:
+
+```bash
+cd backend
+uv run alembic upgrade head
 ```
 
 ## Fluxo esperado

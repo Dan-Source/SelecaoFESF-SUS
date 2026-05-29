@@ -29,7 +29,7 @@ def list_dentist_slots(db: Session, dentist_id: int) -> list[ScheduleSlot]:
 
 
 def delete_dentist_slot(db: Session, dentist_id: int, slot_id: int) -> None:
-    slot = db.get(ScheduleSlot, slot_id)
+    slot = db.scalar(select(ScheduleSlot).where(ScheduleSlot.id == slot_id).with_for_update())
     if not slot or slot.dentist_id != dentist_id:
         raise HTTPException(status_code=404, detail="Horario nao encontrado")
 

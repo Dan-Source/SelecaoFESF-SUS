@@ -5,8 +5,6 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.dentists import router as dentist_router
 from app.api.routes.patients import router as patient_router
 from app.core.config import settings
-from app.db.base import Base
-from app.db.session import engine
 from app.models import appointment, schedule_slot, user  # noqa: F401
 
 
@@ -20,8 +18,6 @@ def create_app() -> FastAPI:
         allow_methods=settings.cors_allow_methods,
         allow_headers=settings.cors_allow_headers,
     )
-
-    Base.metadata.create_all(bind=engine)
 
     @app.get("/health")
     def health() -> dict[str, str]:

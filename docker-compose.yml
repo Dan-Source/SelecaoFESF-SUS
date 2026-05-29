@@ -4,7 +4,9 @@ services:
       context: ./backend
     container_name: odonto_backend
     environment:
-      - DATABASE_URL=sqlite:///./data/app.db
+      - DATABASE_URL=postgresql+psycopg://odonto:odonto@postgres:5432/odonto
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_CACHE_TTL_SECONDS=30
       - JWT_SECRET_KEY=super-secret-change-me
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
     ports:
@@ -12,7 +14,43 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./backend/data:/app/data
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
+    command: sh -c "uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: odonto_postgres
+    environment:
+      - POSTGRES_DB=odonto
+      - POSTGRES_USER=odonto
+      - POSTGRES_PASSWORD=odonto
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odonto -d odonto"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: odonto_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   frontend:
     build:
@@ -35,3 +73,5 @@ services:
 volumes:
   frontend_node_modules:
   frontend_next:
+  postgres_data:
+  redis_data:
